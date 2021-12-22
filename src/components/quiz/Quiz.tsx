@@ -32,7 +32,9 @@ const Quiz = (props: {
   }
 
   return <div>
-    <h2 className={css`margin-bottom: 3em;`}>{decodeURIComponent(props.quiz.question)}</h2>
+    <h2 className={css`max-width: 900px; margin: auto; margin-top: 1em; margin-bottom: 1.5em;`}>
+      {decodeURIComponent(props.quiz.question)}
+    </h2>
     <div className={css`width: 20em; margin: auto; margin-bottom: 4em;`}>
       {props.quiz.choices.map((choice, i) =>
         <Choice clickable
