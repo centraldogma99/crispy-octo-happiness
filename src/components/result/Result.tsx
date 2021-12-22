@@ -1,7 +1,10 @@
 import React from "react";
 import IQuiz from "../../types/quiz";
+import { Button } from "../styled/Button"
 
-const Result = (props: { userAnswers: { index: number, content: string }[], quizs: IQuiz[], startTime: Date }) => {
+const Result = (props: {
+  userAnswers: { index: number, content: string }[], quizs: IQuiz[], startTime: Date, onClickReview: () => void
+}) => {
   let count = 0;
   props.userAnswers.forEach((answer, i) => {
     if (answer.content === props.quizs[i].correct_answer) {
@@ -19,6 +22,7 @@ const Result = (props: { userAnswers: { index: number, content: string }[], quiz
       <p>걸린 시간</p>
       {(Number(new Date()) - Number(props.startTime)) / 1000}초
     </div>
+    <Button onClick={props.onClickReview}>정답 보기</Button>
   </div>;
 };
 

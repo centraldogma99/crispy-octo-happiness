@@ -5,8 +5,11 @@ import IQuiz, { IQuizAPI } from "../../types/quiz";
 import Quiz from "./Quiz";
 import shuffle from "../../modules/shuffle";
 import Result from "../result/Result";
+import { LinearProgress } from "@mui/material";
+import { Button } from "../styled/Button"
+import { css } from "@emotion/css"
 
-const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number }) => {
+const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers?: boolean }) => {
   const numOfQuiz = props.numOfQuiz ?? 10;
   const difficulty = props.difficulty ?? "easy"
 
@@ -20,6 +23,9 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number }) => {
   const [userAnswers, setUserAnswers] = React.useState<{ index: number, content: string }[]>([]);
   // 끝났는지?
   const [isResult, setIsResult] = React.useState<boolean>(false);
+  // 로딩 중인지?
+  const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  const [showAnswers, setShowAnswers] = React.useState<boolean>(props.showAnswers ?? false)
 
   const startTime = useRef<Date>(new Date());
 
@@ -27,8 +33,8 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number }) => {
   useLayoutEffect(() => {
     (async () => {
       const res = await axios.get<{ response_code: number, results: IQuizAPI[] }>(
-        `https://opentdb.com/api.php?amount=${numOfQuiz}&category=9&difficulty=${difficulty}&type=multiple`);
-
+        `https://opentdb.com/api.php?amount=${numOfQuiz}&category=9&difficulty=${difficulty}&type=multiple&encode=url3986`);
+      setIsLoading(false);
       const quizs = res.data.results.map(quiz => {
         return {
           question: quiz.question,
@@ -44,16 +50,41 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number }) => {
   }, [])
 
   const onClickNext = () => {
-    if (!selected) return;
-    if (currentIndex === 0) return;
-    setUserAnswers(prev => [...prev, selected])
-    setSelected(undefined)
+    if (showAnswers) {
+      setSelected(undefined);
+    } else {
+      if (!selected) return;
+      if (currentIndex === 0) return;
+      // 이전으로 왔다가 다음 누르는 것 아니면 데이터 추가
+      if (!userAnswers[currentIndex]) {
+        setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex + 1)])
+        setSelected(undefined)
+      }
+    }
     if (currentIndex < numOfQuiz) {
       setCurrentIndex(prev => prev + 1)
-    }
-    else {
+    } else {
       setIsResult(true)
     }
+    // 다음 항목이 있다면 selected값 변경
+    if (userAnswers[currentIndex]) setSelected(userAnswers[currentIndex])
+  }
+
+  const onClickBefore = () => {
+    if (currentIndex <= 1) return;
+    if (selected) {
+      setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex + 1)]);
+    }
+    setSelected(userAnswers[currentIndex - 2])
+
+    setCurrentIndex(prev => prev - 1);
+  }
+
+  const onClickReview = () => {
+    setIsResult(false);
+    setCurrentIndex(1);
+    // setUserAnswers([]);
+    setShowAnswers(true);
   }
 
   let diffKor = "";
@@ -66,19 +97,35 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number }) => {
   }
 
   return (<>
-    {!isResult && <div>
-      <h1>{diffKor} 퀴즈</h1>
-      <p>{currentIndex}/{numOfQuiz}</p>
+    {isLoading && <div>
+      <h1>Loading...</h1>
+    </div>}
+
+    {(!isLoading && !isResult) && <div>
+      <div className={css`background-color: dodgerblue; color: white; padding-top: 0.5em; padding-bottom: 0.5em;`}>
+        <p className={css`font-size: 2em; margin: 0; margin-bottom: 0.5em;`}>
+          {diffKor} 퀴즈 {showAnswers ? "정답 보기" : ""}</p>
+        <p className={css`font-size: 1.3em; margin: 0;`}>({currentIndex}/{numOfQuiz})</p>
+      </div>
+      <LinearProgress variant="determinate" value={currentIndex / numOfQuiz * 100} />
 
       {quizs.length > 0 && currentIndex > 0 && <Quiz
         quiz={quizs[currentIndex - 1]}
         selected={selected}
         setSelected={setSelected}
+        showAnswers={showAnswers}
+        userAnswer={userAnswers[currentIndex - 1]}
       />}
-
-      <input type="button" onClick={onClickNext} value={currentIndex < numOfQuiz ? "다음" : "결과 보기"} />
+      {(currentIndex > 1) && <Button onClick={onClickBefore}>
+        이전
+      </Button>}
+      <Button disabled={!showAnswers && !selected} onClick={onClickNext}>
+        {currentIndex < numOfQuiz ? "다음" : (showAnswers ? "결과창으로 돌아가기" : "결과 보기")}
+      </Button>
     </div>}
-    {isResult && <Result userAnswers={userAnswers} quizs={quizs} startTime={startTime.current} />}
+
+    {(!isLoading && isResult) &&
+      <Result userAnswers={userAnswers} quizs={quizs} startTime={startTime.current} onClickReview={onClickReview} />}
   </>)
 };
 

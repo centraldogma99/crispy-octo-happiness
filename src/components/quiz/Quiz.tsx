@@ -1,32 +1,48 @@
 import React from "react"
 import IQuiz from "../../types/quiz"
 import styled from "@emotion/styled"
+import { css } from "@emotion/css"
 
 const Choice = styled.p`
-  cursor: ${(props: { clickable?: boolean, selected?: boolean }) => props.clickable ? "pointer" : undefined};
-  color: ${(props: { selected?: boolean }) => props.selected ? "red" : undefined};
+  cursor: ${(props: { clickable?: boolean, selected?: boolean, answer?: boolean, wrong?: boolean }) =>
+    props.clickable ? "pointer" : undefined};
+  color: ${(props: { selected?: boolean, answer?: boolean, wrong?: boolean }) =>
+    props.answer ? "green" : (props.wrong ? "red" : (props.selected ? "blue" : undefined))};
+  border: 0.7px dotted gainsboro;
+  padding: 0.7em;
 `
 
 const Quiz = (props: {
-  quiz: { question: string, choices: string[] },
+  quiz: IQuiz,
   selected?: { index: number, content: string },
   setSelected: React.Dispatch<React.SetStateAction<{
     index: number;
     content: string;
-  } | undefined>>
+  } | undefined>>,
+  showAnswers?: boolean,
+  userAnswer?: { index: number, content: string }
 }) => {
-  // 0 ~ 3
+
+  const onClickChoice = (i: number, choice: string) => {
+    return () => {
+      if (!props.showAnswers) {
+        props.setSelected({ index: i, content: choice })
+      }
+    }
+  }
 
   return <div>
-    <h2>{props.quiz.question}</h2>
-    <div>
+    <h2 className={css`margin-bottom: 3em;`}>{decodeURIComponent(props.quiz.question)}</h2>
+    <div className={css`width: 20em; margin: auto; margin-bottom: 4em;`}>
       {props.quiz.choices.map((choice, i) =>
         <Choice clickable
           selected={i === props.selected?.index}
-          onClick={() => props.setSelected({ index: i, content: choice })}
+          onClick={onClickChoice(i, choice)}
           key={i}
+          answer={props.showAnswers && props.quiz.correct_answer === choice}
+          wrong={props.showAnswers && props.userAnswer?.index === i}
         >
-          {choice}
+          {decodeURIComponent(choice)}
         </Choice>
       )}
     </div>
