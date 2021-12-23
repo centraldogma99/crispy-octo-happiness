@@ -8,7 +8,7 @@ const Choice = styled.p`
     props.clickable ? "pointer" : undefined};
   color: ${(props: { selected?: boolean, answer?: boolean, wrong?: boolean }) =>
     props.answer ? "green" : (props.wrong ? "red" : (props.selected ? "blue" : undefined))};
-  border: 0.7px dotted gainsboro;
+  border: ${(props: { selected?: boolean }) => props.selected ? "0.7px dotted blue" : "0.7px dotted gainsboro"};
   padding: 0.7em;
 `
 

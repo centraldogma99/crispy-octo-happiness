@@ -9,10 +9,13 @@ import { Button } from "../styled/Button"
 import { css } from "@emotion/css"
 import getToken from "../../modules/getToken";
 import refreshToken from "../../modules/refreshToken";
+import ContentContext from "../../contexts/ContentContext";
 
 const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers?: boolean }) => {
   const numOfQuiz = props.numOfQuiz ?? 10;
   const difficulty = props.difficulty ?? "easy"
+
+  const { setContent } = React.useContext(ContentContext);
 
   // !! starts with 1, 0 is just initial value
   // 현재 문제 몇번인지?
@@ -24,11 +27,13 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
   const [userAnswers, setUserAnswers] = React.useState<{ index: number, content: string }[]>([]);
   // 끝났는지?
   const [isResult, setIsResult] = React.useState<boolean>(false);
-  // 로딩 중인지?
+  // 로딩 중인지?, 로드를 할 것인지? 로도 사용됨
   const [isLoading, setIsLoading] = React.useState<boolean>(true);
+  // 답 보여주는지?
   const [showAnswers, setShowAnswers] = React.useState<boolean>(props.showAnswers ?? false)
-
+  // 에러 발생? (문제 소진)
   const [isError, setIsError] = React.useState<string>("")
+  // 
 
   const startTime = useRef<Date>(new Date());
 
@@ -38,6 +43,9 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
   useLayoutEffect(() => {
     (async () => {
       if (isError.length > 0) return;
+      if (!isLoading) return;
+
+      // 토큰 가져오기
       let token = sessionStorage.getItem(sessionKeyName);
       if (!token) {
         const t = await getToken();
@@ -66,7 +74,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
       setQuizs(quizs);
       setCurrentIndex(1);
     })()
-  }, [isError])
+  }, [isError, isLoading])
 
   const onClickNext = () => {
     if (showAnswers) {
@@ -92,7 +100,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
   const onClickBefore = () => {
     if (currentIndex <= 1) return;
     if (selected) {
-      setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex + 1)]);
+      setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex)]);
     }
     setSelected(userAnswers[currentIndex - 2])
 
@@ -104,6 +112,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
     setCurrentIndex(1);
     // setUserAnswers([]);
     setShowAnswers(true);
+    setSelected(userAnswers[0])
   }
 
   const onClickRetry = () => {
@@ -116,6 +125,26 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
   const onClickRefresh = () => {
     refreshToken(sessionStorage.getItem(sessionKeyName))
     setIsError("")
+    setCurrentIndex(1);
+    setUserAnswers([]);
+    setShowAnswers(false);
+    setIsLoading(true);
+  }
+
+  const onClickRetryNew = () => {
+    setIsResult(false);
+    setCurrentIndex(1);
+    setUserAnswers([]);
+    setShowAnswers(false);
+    setIsLoading(true);
+  }
+
+  const onClickToIntro = () => {
+    setIsResult(false);
+    setCurrentIndex(1);
+    setUserAnswers([]);
+    setShowAnswers(false);
+    setContent({ content: "intro" });
   }
 
   let diffKor = "";
@@ -129,7 +158,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
 
   return (<>
     {isLoading && <div>
-      <h1>Loading...</h1>
+      <h1>퀴즈 로딩 중...</h1>
     </div>}
 
     {isError.length > 0 && <div>
@@ -153,7 +182,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
         userAnswer={userAnswers[currentIndex - 1]}
       />}
 
-      {(currentIndex > 1) && <Button onClick={onClickBefore}>
+      {(currentIndex > 1) && <Button onClick={onClickBefore} className={css`margin-right: 1em;`}>
         이전
       </Button>}
       <Button disabled={!showAnswers && !selected} onClick={onClickNext}>
@@ -166,7 +195,9 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
         quizs={quizs}
         startTime={startTime.current}
         onClickReview={onClickReview}
-        onClickRetry={onClickRetry} />}
+        onClickRetry={onClickRetry}
+        onClickRetryNew={onClickRetryNew}
+        onClickToIntro={onClickToIntro} />}
   </>)
 };
 
