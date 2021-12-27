@@ -86,32 +86,58 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
   }, [isError, isLoading])
 
   const onClickNext = () => {
-    if (showAnswers) {
-      setSelected(undefined);
-    } else {
+    if (!showAnswers) {
+      // 제출 버튼
       if (!selected) return;
-      if (currentIndex === 0) return;
-      // 이전으로 왔다가 다음 누르는 것 아니면 데이터 추가
+      // 답 확인 시켜준 후 저장
+      setShowAnswers(true);
       if (!userAnswers[currentIndex]) {
-        setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex + 1)])
-        setSelected(undefined)
+        setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex)])
       }
+      setSelected(undefined);
     }
-    if (currentIndex < numOfQuiz) {
-      setCurrentIndex(prev => prev + 1)
-    } else {
-      setIsResult(true)
+    else {
+      // 다음 버튼
+      setShowAnswers(false);
+      setSelected(undefined);
+
+      if (currentIndex < numOfQuiz) {
+        setCurrentIndex(prev => prev + 1)
+      } else {
+        setIsResult(true)
+      }
+
+      if (userAnswers[currentIndex]) setShowAnswers(true);
     }
-    // 다음 항목이 있다면 selected값 변경
-    if (userAnswers[currentIndex]) setSelected(userAnswers[currentIndex])
+
+    // if (showAnswers) {
+    //   setSelected(undefined);
+    // } else {
+    //   if (!selected) return;
+    //   if (currentIndex === 0) return;
+    //   // 이전으로 왔다가 다음 누르는 것 아니면 데이터 추가
+    //   if (!userAnswers[currentIndex]) {
+    //     setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex + 1)])
+    //     setSelected(undefined)
+    //   }
+    // }
+    // if (currentIndex < numOfQuiz) {
+    //   setCurrentIndex(prev => prev + 1)
+    // } else {
+    //   setIsResult(true)
+    // }
+    // // 다음 항목이 있다면 selected값 변경
+    // if (userAnswers[currentIndex]) setSelected(userAnswers[currentIndex])
   }
 
   const onClickBefore = () => {
     if (currentIndex <= 1) return;
-    if (selected) {
-      setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex)]);
-    }
-    setSelected(userAnswers[currentIndex - 2])
+    setSelected(undefined)
+    // if (selected) {
+    //   setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex)]);
+    // }
+    setShowAnswers(true);
+    // setSelected(userAnswers[currentIndex - 2])
 
     setCurrentIndex(prev => prev - 1);
   }
@@ -156,6 +182,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
     setContent({ content: "intro" });
   }
 
+
   let diffKor = "";
   if (difficulty === "easy") {
     diffKor = "쉬움 난이도";
@@ -195,8 +222,12 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
         이전
       </Button>}
       <Button disabled={!showAnswers && !selected} onClick={onClickNext}>
-        {currentIndex < numOfQuiz ? "다음" : (showAnswers ? "결과창으로 돌아가기" : "결과 보기")}
+        {showAnswers ? (currentIndex < numOfQuiz ? "다음" : "결과 보기") : "제출"}
       </Button>
+      {showAnswers && <div className={css`font-size: 20px; font-weight: bold; margin-top: 40px;`}>
+        {userAnswers[currentIndex - 1].content === quizs[currentIndex - 1].correct_answer ?
+          <p>정답입니다!</p> : <p>틀렸습니다!<br />정답이 <span className={css`color: green;`}>녹색</span>으로 표시됩니다.</p>}
+      </div>}
     </div>}
 
     {(!isLoading && isResult) &&

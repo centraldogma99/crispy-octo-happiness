@@ -10,6 +10,7 @@ const Choice = styled.p`
     props.answer ? "green" : (props.wrong ? "red" : (props.selected ? "blue" : undefined))};
   border: ${(props: { selected?: boolean }) => props.selected ? "0.7px dotted blue" : "0.7px dotted gainsboro"};
   padding: 0.7em;
+  font-weight: ${(props: { answer?: boolean }) => props.answer ? "bold" : undefined};
 `
 
 const Quiz = (props: {
@@ -31,7 +32,7 @@ const Quiz = (props: {
     }
   }
 
-  return <div>
+  return <div className={css`margin: 20px;`}>
     <h2 className={css`max-width: 900px; margin: auto; margin-top: 1em; margin-bottom: 1.5em;`}>
       {decodeURIComponent(props.quiz.question)}
     </h2>
