@@ -53,14 +53,23 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
         token = t;
       }
 
-      const res = await axios.get<{ response_code: number, results: IQuizAPI[] }>(
-        `https://opentdb.com/api.php?amount=${numOfQuiz}&category=9&difficulty=${difficulty}&type=multiple&encode=url3986&token=${token}`);
-      setIsLoading(false);
+      const fetchData = (token: string) => {
+        return axios.get<{ response_code: number, results: IQuizAPI[] }>(
+          `https://opentdb.com/api.php?amount=${numOfQuiz}&category=9&difficulty=${difficulty}&type=multiple&encode=url3986&token=${token}`);
+      }
 
-      if (res.data.response_code === 4) {
+      let res = await fetchData(token);
+
+      // session expired
+      if (res.data.response_code === 3) {
+        console.log('session expired')
+        const token = await getToken();
+        res = await fetchData(token)
+      } else if (res.data.response_code === 4) {
         setIsError("이 난이도의 모든 퀴즈를 풀었습니다. 이미 푼 퀴즈도 다시 풀고 싶다면 아래 버튼을 눌러주세요.")
         return;
       }
+      setIsLoading(false);
 
       const quizs = res.data.results.map(quiz => {
         return {
