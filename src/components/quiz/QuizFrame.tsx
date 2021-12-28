@@ -33,7 +33,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
   const [showAnswers, setShowAnswers] = React.useState<boolean>(props.showAnswers ?? false)
   // 에러 발생? (문제 소진)
   const [isError, setIsError] = React.useState<string>("")
-  // 
+  const [isReview, setIsReview] = React.useState<boolean>(false);
 
   const startTime = useRef<Date>(new Date());
 
@@ -62,7 +62,6 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
 
       // session expired
       if (res.data.response_code === 3) {
-        console.log('session expired')
         const token = await getToken();
         res = await fetchData(token)
       } else if (res.data.response_code === 4) {
@@ -101,7 +100,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
       setShowAnswers(false);
       setSelected(undefined);
 
-      if (currentIndex < numOfQuiz) {
+      if (currentIndex < quizs.length) {
         setCurrentIndex(prev => prev + 1)
       } else {
         setIsResult(true)
@@ -109,25 +108,6 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
 
       if (userAnswers[currentIndex]) setShowAnswers(true);
     }
-
-    // if (showAnswers) {
-    //   setSelected(undefined);
-    // } else {
-    //   if (!selected) return;
-    //   if (currentIndex === 0) return;
-    //   // 이전으로 왔다가 다음 누르는 것 아니면 데이터 추가
-    //   if (!userAnswers[currentIndex]) {
-    //     setUserAnswers(prev => [...prev.slice(0, currentIndex - 1), selected, ...prev.slice(currentIndex + 1)])
-    //     setSelected(undefined)
-    //   }
-    // }
-    // if (currentIndex < numOfQuiz) {
-    //   setCurrentIndex(prev => prev + 1)
-    // } else {
-    //   setIsResult(true)
-    // }
-    // // 다음 항목이 있다면 selected값 변경
-    // if (userAnswers[currentIndex]) setSelected(userAnswers[currentIndex])
   }
 
   const onClickBefore = () => {
@@ -143,6 +123,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
   }
 
   const onClickReview = () => {
+    setIsReview(true);
     setIsResult(false);
     setCurrentIndex(1);
     // setUserAnswers([]);
@@ -150,7 +131,19 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
     setSelected(userAnswers[0])
   }
 
+  const onClickResult = () => {
+    setIsResult(true);
+    setCurrentIndex(1);
+    setShowAnswers(false);
+    setIsReview(false);
+    setSelected(undefined);
+  }
+
   const onClickRetry = () => {
+    const wrongs = quizs.filter((quiz, i) => {
+      return quiz.correct_answer != userAnswers[i].content
+    })
+    setQuizs(wrongs)
     setIsResult(false);
     setCurrentIndex(1);
     setUserAnswers([]);
@@ -206,9 +199,9 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
       <div className={css`background-color: dodgerblue; color: white; padding-top: 0.5em; padding-bottom: 0.5em;`}>
         <p className={css`font-size: 2em; margin: 0; margin-bottom: 0.5em; font-weight: 600;`}>
           {diffKor} 퀴즈 {showAnswers ? "정답 보기" : ""}</p>
-        <p className={css`font-size: 1.3em; margin: 0;`}>({currentIndex}/{numOfQuiz})</p>
+        <p className={css`font-size: 1.3em; margin: 0;`}>({currentIndex}/{quizs.length})</p>
       </div>
-      <LinearProgress variant="determinate" value={currentIndex / numOfQuiz * 100} />
+      <LinearProgress variant="determinate" value={currentIndex / quizs.length * 100} />
 
       {(quizs.length > 0 && currentIndex > 0 && isError.length === 0) && <Quiz
         quiz={quizs[currentIndex - 1]}
@@ -222,12 +215,13 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
         이전
       </Button>}
       <Button disabled={!showAnswers && !selected} onClick={onClickNext}>
-        {showAnswers ? (currentIndex < numOfQuiz ? "다음" : "결과 보기") : "제출"}
-      </Button>
+        {showAnswers ? (currentIndex < quizs.length ? "다음" : "결과 보기") : "제출"}
+      </Button><br />
       {showAnswers && <div className={css`font-size: 20px; font-weight: bold; margin-top: 40px;`}>
         {userAnswers[currentIndex - 1].content === quizs[currentIndex - 1].correct_answer ?
           <p>정답입니다!</p> : <p>틀렸습니다!<br />정답이 <span className={css`color: green;`}>녹색</span>으로 표시됩니다.</p>}
       </div>}
+      {isReview && <Button className={css`margin-top: 20px;`} onClick={onClickResult}>결과창으로 돌아가기</Button>}
     </div>}
 
     {(!isLoading && isResult) &&

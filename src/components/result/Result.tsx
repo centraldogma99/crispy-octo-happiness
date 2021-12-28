@@ -65,8 +65,8 @@ const Result = (props: {
       <Item>걸린 시간</Item>
       <ItemValue>{(Number(new Date()) - Number(props.startTime)) / 1000}초</ItemValue>
     </div>
-    <p><Button onClick={props.onClickReview}>정답 보기</Button></p>
-    <p><Button onClick={props.onClickRetry}>다시 풀기</Button></p>
+    <p><Button onClick={props.onClickReview}>다시 보기</Button></p>
+    <p><Button onClick={props.onClickRetry}>틀린 문제만 풀기</Button></p>
     <p><Button onClick={props.onClickRetryNew}>새로운 문제 풀기</Button></p>
     <p><Button onClick={props.onClickToIntro}>난이도 선택 화면으로 돌아가기</Button></p>
   </div>;
