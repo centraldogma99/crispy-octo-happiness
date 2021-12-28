@@ -186,7 +186,7 @@ const QuizFrame = (props: { difficulty?: string, numOfQuiz?: number, showAnswers
   }
 
   return (<>
-    {isLoading && <div>
+    {isLoading && <div className={css`position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);`}>
       <h1>퀴즈 로딩 중...</h1>
     </div>}
 
