@@ -17,7 +17,7 @@ const ItemValue = styled.p`
 `
 
 const container = css`
-  border: 1px solid black;
+  border: 1px solid gainsboro;
   width: 10em;
   margin: auto;
   padding: 1em;
